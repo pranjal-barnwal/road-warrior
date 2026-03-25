@@ -129,7 +129,7 @@ The chosen architecture style is **Event-Driven Microservices** with a Backend-f
 | 3 | Elasticity | Operational | The system must dynamically provision and de-provision resources (compute, database capacity) in response to fluctuating user load, ensuring cost-efficiency during off-peak times and performance during peak demand. |
 | 4 | Availability | Operational | As a critical dashboard for travelers, especially during active travel, the system must be continuously accessible and operational to provide up-to-date information without interruption. |
 
-These characteristics were chosen as the top drivers because they directly address the core challenges presented by the problem: handling significant user load, providing an excellent and timely user experience, ensuring the system is always there when travelers need it most, and efficiently managing resources for variable demand. Other important characteristics like performance and data consistency but are secondary to the operational demands for this particular problem statement.
+These characteristics were chosen as the top drivers because they directly address the core challenges presented by the problem: handling significant user load, providing an excellent and timely user experience, ensuring the system is always there when travelers need it most, and efficiently managing resources for variable demand. Other important characteristics, such as performance and data consistency, remain relevant but are secondary to the operational demands of this problem statement.
 
 ![Architecture Characteristics](Architecture%20Characteristics.png)
 
@@ -139,9 +139,9 @@ These characteristics were chosen as the top drivers because they directly addre
 
 ## 7. Architecture Decision Records (ADRs)
 
-[**ADR-1: Microservices Architecture with Event-Driven Design**](ADR/ADR-2.md)
+[**ADR-1: Microservices Architecture with Event-Driven Design**](ADR/ADR-1.md)
 
-[**ADR-2: Asynchronous Event-Driven Integration for Reservation Updates**](ADR/ADR-1.md)
+[**ADR-2: Asynchronous Event-Driven Integration for Reservation Updates**](ADR/ADR-2.md)
 
 [**ADR-3: Real-time User Interface Updates via WebSockets/SSE**](ADR/ADR-3.md)
 
