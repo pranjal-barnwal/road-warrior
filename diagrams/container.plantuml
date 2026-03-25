@@ -1,0 +1,44 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+LAYOUT_WITH_LEGEND()
+title Container Diagram - Road Warrior Trip Management
+
+Person(traveler, "End User (Traveler)", "Registered traveler managing trip reservations")
+System_Ext(agencyInterface, "Agency Interface System", "Aggregates reservation data")
+System_Ext(socialMedia, "Social Media Platforms", "Standard platforms for sharing text")
+System_Ext(identityProvider, "Agency Identity Provider", "Handles user authentication")
+
+System_Boundary(roadWarrior, "Road Warrior Trip Management") {
+  Container(webApp, "Web Application", "React SPA", "Provides a rich web interface for travelers")
+  Container(mobileApp, "Mobile Application", "React Native", "Provides native mobile interface for iOS/Android")
+  Container(bffService, "BFF Service", "Azure Function App / .NET Core", "Backend-for-Frontend, aggregates data for UI")
+  Container(apiGateway, "API Gateway", "Azure API Management", "Secures, routes, and manages external API traffic")
+  Container(reservationIngestion, "Reservation Ingestion Service", "Azure Function App / Python", "Consumes reservation updates from Agency Interface")
+  Container(tripManagement, "Trip Management Service", "Azure Function App / Java Spring", "Groups reservations into trips, handles archiving")
+  Container(userProfileService, "User Profile Service", "Azure Function App / .NET Core", "Manages user-specific settings and preferences")
+  Container(notificationService, "Notification Service", "Node.js (WebSockets)", "Manages and sends real-time updates to users via persistent connections")
+  ContainerDb(roadWarriorDb, "Road Warrior Database", "Azure SQL Database", "Stores trip, reservation, and user data")
+  Container(messageBroker, "Message Broker", "Azure Service Bus", "Facilitates event-driven communication between services and with Agency Interface")
+  Container(cache, "Cache", "Azure Cache for Redis", "Stores frequently accessed and temporal data for performance")
+}
+
+Rel(traveler, webApp, "Uses", "HTTPS")
+Rel(traveler, mobileApp, "Uses", "HTTPS")
+Rel(webApp, apiGateway, "Uses", "HTTPS/JSON")
+Rel(mobileApp, apiGateway, "Uses", "HTTPS/JSON")
+Rel(apiGateway, bffService, "Routes API requests to", "HTTPS/JSON")
+Rel(apiGateway, notificationService, "Routes WebSocket connections to", "WSS")
+Rel(bffService, tripManagement, "Retrieves trip/reservation data", "HTTPS/JSON")
+Rel(bffService, userProfileService, "Retrieves user profile data", "HTTPS/JSON")
+Rel(bffService, socialMedia, "Invokes sharing intent", "URL scheme")
+Rel(agencyInterface, messageBroker, "Publishes reservation updates", "AMQP")
+Rel(reservationIngestion, messageBroker, "Subscribes to updates from", "AMQP")
+Rel(reservationIngestion, roadWarriorDb, "Writes reservation data to", "SQL")
+Rel(tripManagement, roadWarriorDb, "Reads/Writes trip/reservation data", "SQL")
+Rel(tripManagement, messageBroker, "Publishes trip events", "AMQP")
+Rel(messageBroker, notificationService, "Subscribes to trip events from", "AMQP")
+Rel(userProfileService, roadWarriorDb, "Reads/Writes user data", "SQL")
+Rel(bffService, cache, "Reads/Writes cached data", "Redis Protocol")
+Rel(tripManagement, cache, "Invalidates/Updates cache", "Redis Protocol")
+Rel(apiGateway, identityProvider, "Authenticates via", "OAuth 2.0")
+@enduml

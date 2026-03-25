@@ -1,0 +1,16 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+LAYOUT_WITH_LEGEND()
+title System Context - Road Warrior Trip Management
+
+Person(traveler, "End User (Traveler)", "Registered traveler managing trip reservations")
+System(roadWarrior, "Road Warrior Trip Management", "Online dashboard for viewing and managing existing travel reservations")
+System_Ext(agencyInterface, "Agency Interface System", "Aggregates airline, hotel, and car-rental reservation data")
+System_Ext(socialMedia, "Social Media Platforms", "Standard platforms for sharing text-based content")
+System_Ext(identityProvider, "Agency Identity Provider", "Handles user authentication and authorization")
+
+Rel(traveler, roadWarrior, "Views/Manages trips via", "Web/Mobile App")
+Rel(roadWarrior, agencyInterface, "Consumes reservation data", "Events / API")
+Rel(traveler, identityProvider, "Authenticates with", "OAuth 2.0 / OIDC")
+Rel(roadWarrior, socialMedia, "Shares trip summary to", "Basic share intent")
+@enduml

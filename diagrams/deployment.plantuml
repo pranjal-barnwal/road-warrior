@@ -1,0 +1,76 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+LAYOUT_WITH_LEGEND()
+title Deployment View - Road Warrior Trip Management
+
+Person(traveler, "End User (Traveler)", "Accesses Road Warrior via Web/Mobile App")
+System_Ext(agencyInterface, "Agency Interface System", "Publishes reservation updates")
+System_Ext(socialMedia, "Social Media Platforms", "Receives text-based trip summaries")
+System_Ext(externalIdP, "Agency Identity Provider", "Authenticates users (e.g., via Azure AD B2C)")
+
+Deployment_Node(azureCloud, "Microsoft Azure Cloud", "Road Warrior System hosted on Azure") {
+
+  Deployment_Node(azureRegion, "Azure Region (e.g., East US 2)", "Primary deployment region") {
+
+    Deployment_Node(edgeAndNetworking, "Edge & API Management", "Global/Regional Ingress Layer") {
+      Container(frontDoor, "Azure Front Door", "Global CDN, WAF & Routing", "Serves static content, routes user traffic to API Gateway")
+      Container(apiMgmt, "Azure API Management", "API Gateway", "Secures, routes, and manages external API traffic")
+    }
+
+    Deployment_Node(clientHosting, "Client Application Hosting", "Managed Web & Mobile Assets") {
+      Container(webApp, "Web Application (SPA)", "Azure Static Web Apps", "Hosts React SPA static assets")
+      Container(mobileAppAssets, "Mobile App Assets", "Azure Blob Storage / CDN", "Hosts mobile app binaries and updates")
+    }
+
+    Deployment_Node(aksCluster, "Backend Microservices Compute", "Azure Kubernetes Service (AKS)", "Scalable container orchestration for core services") {
+      Container(bffService, "BFF Service", ".NET Core API", "Backend-for-Frontend: Tailors API responses for Web/Mobile")
+      Container(resIngestion, "Reservation Ingestion Service", "Python App", "Ingests reservation updates from Agency Interface")
+      Container(tripMgmt, "Trip Management Service", "Java Spring App", "Groups reservations, handles archiving, core trip logic")
+      Container(userProfileSvc, "User Profile Service", ".NET Core API", "Manages user-specific settings and preferences")
+      Container(notificationSvc, "Notification Service", "Node.js App / WebSockets", "Manages and sends real-time notifications to users")
+    }
+
+    Deployment_Node(dataAndCache, "Data & Caching Tier", "Managed Data Services") {
+      ContainerDb(sqlDb, "Road Warrior Database", "Azure SQL Database (PaaS)", "Primary OLTP for trip, reservation, and user data (geo-redundant, HA)")
+      Container(redisCache, "Distributed Cache", "Azure Cache for Redis (PaaS)", "High-performance cache for frequently accessed data")
+    }
+
+    Deployment_Node(messaging, "Messaging Infrastructure", "Managed Queue/Eventing Service") {
+      Container(serviceBus, "Azure Service Bus", "Enterprise Message Broker (PaaS)", "Handles event-driven communication (agency updates, internal events)")
+    }
+
+    ' Azure AD B2C is a global service, but conceptually linked to the region's operations
+    Container(aadB2C, "Azure AD B2C", "Identity Management (PaaS)", "Handles user authentication and authorization")
+
+    ' Observability is a platform-wide capability, not a single node
+    Deployment_Node(observability, "Observability Platform", "Azure Monitor / Log Analytics", "Centralized logging, metrics, tracing, alerting for all Azure services") {
+      ' No explicit containers within, it's a platform service that consumes data from others
+    }
+  }
+}
+
+' External Systems and User Interactions
+Rel(traveler, frontDoor, "Accesses system via", "HTTPS/WSS")
+Rel(frontDoor, webApp, "Serves Web App SPA to", "HTTPS")
+Rel(frontDoor, apiMgmt, "Routes API requests and WebSocket connections to", "HTTPS/WSS")
+
+Rel(apiMgmt, aksCluster, "Routes API calls and WebSocket connections to (via internal Load Balancer)", "HTTPS/WSS")
+Rel(apiMgmt, aadB2C, "Delegates user authentication to", "OAuth 2.0 / OIDC")
+Rel(aadB2C, externalIdP, "Authentication and Authorization via", "OAuth 2.0 / OIDC")
+
+Rel(agencyInterface, serviceBus, "Publishes ReservationUpdated events to", "AMQP")
+Rel(resIngestion, serviceBus, "Subscribes to ReservationUpdated events from", "AMQP")
+
+Rel(aksCluster, sqlDb, "Reads/Writes data", "SQL Protocol")
+Rel(aksCluster, redisCache, "Reads/Writes cached data", "Redis Protocol")
+Rel(aksCluster, serviceBus, "Publishes/Consumes internal events", "AMQP")
+Rel(aksCluster, socialMedia, "BFF invokes sharing intent to", "URL Scheme / Basic API")
+Rel(notificationSvc, serviceBus, "Consumes events from", "AMQP")
+Rel(bffService, userProfileSvc, "Reads/Writes user data", "HTTPS/JSON")
+Rel(bffService, tripMgmt, "Reads/Writes trips data", "HTTPS/JSON")
+Rel(agencyInterface, tripMgmt, "Users reservation data", "HTTPS/JSON")
+
+' Implicit observability relations (managed by Azure)
+Rel(azureRegion, observability, "All managed services and AKS components send telemetry to", "Azure Monitor agents")
+
+@enduml
